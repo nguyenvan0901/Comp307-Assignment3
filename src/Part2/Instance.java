@@ -12,6 +12,7 @@ public class Instance {
     public Instance(String[] parts){
 
         this.label = parts[1];
+
         for(int i=2; i<parts.length; i++){
             values.add(parts[i]);
         }
