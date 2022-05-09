@@ -130,7 +130,7 @@ public class Naive_Bayes {
 
                 for(String label: distinct_labels){
 
-                    String key =  attribute_name + "/" + label + "/" + value;
+                    String key =  attribute_name + "=" + value + ",class=" + label;
                     record.put(key,1);
 
                 }
@@ -157,7 +157,7 @@ public class Naive_Bayes {
 
                 String attribute_name = attribute_names.get(i);
                 HashMap<String, Integer> current_count = counts.get(i);
-                String key = attribute_name+ "/" + label + "/" + values.get(i);
+                String key = attribute_name+ "=" + values.get(i) + ",class=" + label;
 
                 current_count.put(key, current_count.get(key)+1);
 
@@ -191,9 +191,9 @@ public class Naive_Bayes {
 
                 for(Map.Entry<String, Integer> entry: hm.entrySet()){
 
-                    String[] parts = entry.getKey().split("/");
+                    String[] parts = entry.getKey().split(",");
 
-                    if(parts[1].equals(label)){
+                    if(parts[1].equals("class=" + label)){
 
                         count = count + entry.getValue();
 
@@ -202,7 +202,7 @@ public class Naive_Bayes {
                 }
 
                 // key is of form (Xi,y)
-                String key = attribute + "/" + label;
+                String key = attribute + "," + label;
                 total.put(key, count);
 
             }
@@ -210,9 +210,9 @@ public class Naive_Bayes {
         }
 
         //------------------This code is only for checking----------------------
-//        for(Map.Entry<String, Integer> entry: total.entrySet()){
-//            System.out.println(entry.toString());
-//        }
+        for(Map.Entry<String, Integer> entry: total.entrySet()){
+            System.out.println(entry.toString());
+        }
 //
 //        System.out.println("\n");
 //
@@ -237,7 +237,7 @@ public class Naive_Bayes {
 
                 for(String xi: attribute_values.get(i)){
 
-                    
+
 
                 }
 
