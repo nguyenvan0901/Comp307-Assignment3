@@ -2,6 +2,7 @@ package Part2;
 
 import javax.transaction.xa.Xid;
 import java.io.File;
+import java.sql.SQLOutput;
 import java.util.*;
 
 public class Naive_Bayes {
@@ -11,7 +12,7 @@ public class Naive_Bayes {
     private List<String> attribute_names = new ArrayList<>();
 
     // this field holds all the possible value of each attribute
-    private List<HashSet<String>> attribute_values = new ArrayList<>();
+    private List<List<String>> attribute_values = new ArrayList<>();
 
     // this field holds all the possible value of class labels
     private HashSet<String> distinct_labels = new HashSet<>();
@@ -34,9 +35,16 @@ public class Naive_Bayes {
 
     private int class_total = 0;
 
+    private boolean report_probs = false;
 
-    public Naive_Bayes(){
-        File train_file = new File("src/Part2/breast-cancer-training.csv");
+
+    public Naive_Bayes(String train_file_name, String test_file_name, String report){
+
+        if(report.equals("yes")){
+            this.report_probs = true;
+        }
+
+        File train_file = new File(train_file_name);
 
         try{
             Scanner sc = new Scanner(train_file);
@@ -47,7 +55,6 @@ public class Naive_Bayes {
             for(int i=2; i<attributes.length; i++){
 
                 attribute_names.add(attributes[i]);
-                attribute_values.add(new HashSet<>());
 
             }
 
@@ -59,19 +66,44 @@ public class Naive_Bayes {
 
             }
 
+            ArrayList<String> age_values = new ArrayList<>(Arrays.asList("10-19", "20-29", "30-39", "40-49", "50-59",
+                                                                        "60-69", "70-79", "80-89", "90-99"));
+
+            ArrayList<String> menopause_values = new ArrayList<>(Arrays.asList("lt40", "ge40", "premeno"));
+
+            ArrayList<String> tumor_size_values = new ArrayList<>(Arrays.asList("0-4", "5-9", "10-14", "15-19","20-24",
+                                                        "25-29","30-34", "35-39", "40-44", "45-49", "50-54", "55-59"));
+
+            ArrayList<String> inv_nodes_values = new ArrayList<>(Arrays.asList( "0-2", "3-5", "6-8", "9-11", "12-14",
+                    "15-17", "18-20", "21-23", "24-26", "27-29", "30-32","33-35", "36-39"));
+
+            ArrayList<String> node_caps_values = new ArrayList<>(Arrays.asList("yes", "no"));
+
+            ArrayList<String> deg_malig_values = new ArrayList<>(Arrays.asList("1", "2", "3"));
+
+            ArrayList<String> breast_values = new ArrayList<>(Arrays.asList("left", "right"));
+
+            ArrayList<String> breast_quad_values = new ArrayList<>(Arrays.asList("left_up", "left_low", "right_up",
+                                                                                "right_low", "central"));
+
+            ArrayList<String> irradiat_values = new ArrayList<>(Arrays.asList("yes", "no"));
+
+            attribute_values.add(age_values);
+            attribute_values.add(menopause_values);
+            attribute_values.add(tumor_size_values);
+            attribute_values.add(inv_nodes_values);
+            attribute_values.add(node_caps_values);
+            attribute_values.add(deg_malig_values);
+            attribute_values.add(breast_values);
+            attribute_values.add(breast_quad_values);
+            attribute_values.add(irradiat_values);
+
             while(sc.hasNext()){
 
                 String line = sc.next();
                 String[] parts = line.split(",");
 
                 distinct_labels.add(parts[1]);
-
-                for(int i=2; i<parts.length; i++){
-
-                    attribute_values.get(i-2).add(parts[i]);
-
-                }
-
                 train_instances.add(new Instance(parts));
 
             }
@@ -100,7 +132,7 @@ public class Naive_Bayes {
 
 
         // -------------------------------Constructing test instances---------------------------------------------------
-        File test_file  = new File("src/Part2/breast-cancer-test.csv");
+        File test_file  = new File(test_file_name);
 
         List<Instance> test_instances = new ArrayList<>();
         try{
@@ -156,7 +188,7 @@ public class Naive_Bayes {
             String attribute_name = attribute_names.get(i);
 
             // distinct value of each attribute column.
-            HashSet<String> Xi = attribute_values.get(i);
+            List<String> Xi = attribute_values.get(i);
 
             // initialise count(Xi, xi, y) = 1
             HashMap<String, Integer> record = counts.get(i);
@@ -192,6 +224,7 @@ public class Naive_Bayes {
                 String attribute_name = attribute_names.get(i);
                 HashMap<String, Integer> current_count = counts.get(i);
                 String key = attribute_name+ "=" + values.get(i) + ",class=" + label;
+
 
                 current_count.put(key, current_count.get(key)+1);
 
@@ -262,6 +295,7 @@ public class Naive_Bayes {
 
     public void calculateProbability(){
 
+        // this method is to calculate all the conditional probability.
         for(String label: distinct_labels){
 
             double y_probability = (double) y_count.get(label) / (double) class_total;
@@ -291,6 +325,8 @@ public class Naive_Bayes {
             }
 
         }
+        //-------------Uncomment this section if you need to print out probability of Y and conditional probs-----------
+
 //        System.out.println("-----------------------------------------------------------------------------------------");
 //        System.out.println("Probability of y");
 //        for(Map.Entry<String, Double> entry: probability_y.entrySet()){
@@ -304,8 +340,30 @@ public class Naive_Bayes {
 //            System.out.println(entry.toString());
 //        }
 //
+//        System.out.println("\n");
+//
 //        System.out.println("-----------------------------------------------------------------------------------------");
 
+        //--------------------------------------------------------------------------------------------------------------
+    }
+
+    // this method is used to check all the conditional probabilities and
+    public void report(){
+        if(report_probs){
+            System.out.println("Probability of y");
+            for(Map.Entry<String, Double> entry: probability_y.entrySet()){
+                System.out.println(entry.toString());
+            }
+
+            System.out.println("\n");
+
+            System.out.println("Conditional probability");
+            for(Map.Entry<String, Double> entry: probability_table.entrySet()){
+                System.out.println(entry.toString());
+            }
+
+            System.out.println("\n");
+        }
     }
 
 
@@ -337,6 +395,8 @@ public class Naive_Bayes {
             test_label.add(instance.getLabel());
         }
 
+        int index=1;
+
         for(Instance instance: test_instances){
 
             double final_score = 0.0;
@@ -345,7 +405,7 @@ public class Naive_Bayes {
             for(String label: distinct_labels){
 
                 double score = calculateClassScore(instance, label);
-
+                System.out.println("Instance " + index + " " + label + " score: " + score);
                 if(score > final_score){
 
                     final_score = score;
@@ -354,12 +414,13 @@ public class Naive_Bayes {
                 }
 
             }
-
+            System.out.println("Final label prediction: " + " " + final_label + " | Correct label: " + instance.getLabel() + "\n");
             predicted_label.add(final_label);
+            index++;
         }
 
-        System.out.println(test_label.toString());
-        System.out.println(predicted_label.toString());
+        System.out.println(test_label);
+        System.out.println(predicted_label);
 
         int correct_prediction = 0;
         for(int i=0; i<test_label.size(); i++){
@@ -379,6 +440,20 @@ public class Naive_Bayes {
 
 
     public static void main(String[] args){
-        new Naive_Bayes();
+        if(args.length == 2){
+            String train_file = args[0];
+            String test_file = args[1];
+            String report = "no";
+            new Naive_Bayes(train_file, test_file, report);
+        }
+
+        else if(args.length == 3) {
+            String train_file = args[0];
+            String test_file = args[1];
+            String report = args[2];
+            Naive_Bayes nb = new Naive_Bayes(train_file, test_file, report);
+            System.out.println("\n");
+            nb.report();
+        }
     }
 }
